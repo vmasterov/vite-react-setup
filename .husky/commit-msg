@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Определение цветов
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+WHITE='\033[1;37m'
+NC='\033[0m' # No Color
+
+message="$(cat "$1")"
+required_pattern="^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\(.+\))?: .+"
+
+if ! echo "$message" | grep -qE "$required_pattern"; then
+  echo "❌ Неверный формат сообщения коммита. Сообщение коммита должно соответствовать Conventional Commits:"
+  echo "${WHITE}<type>[optional scope]: <description>${NC}"
+  echo ""
+  echo "Допустимые типы:"
+  echo "  ${GREEN}feat${NC}     - новая функциональность"
+  echo "  ${GREEN}fix${NC}      - исправление багов"
+  echo "  ${GREEN}docs${NC}     - изменения в документации"
+  echo "  ${GREEN}style${NC}    - форматирование, отсутствующие точки с запятой и т.д."
+  echo "  ${GREEN}refactor${NC} - рефакторинг кода"
+  echo "  ${GREEN}perf${NC}     - улучшение производительности"
+  echo "  ${GREEN}test${NC}     - добавление тестов"
+  echo "  ${GREEN}chore${NC}    - обновление сборки, вспомогательные инструменты"
+  echo "  ${GREEN}build${NC}    - изменения в системе сборки"
+  echo "  ${GREEN}ci${NC}       - изменения в CI/CD"
+  echo "  ${GREEN}revert${NC}   - откат предыдущих изменений"
+  echo ""
+  echo "Примеры:"
+  echo "  ${WHITE}feat: добавлена новая страница авторизации${NC}"
+  echo "  ${WHITE}fix(auth): исправлена ошибка валидации пароля${NC}"
+  echo "  ${WHITE}docs: обновлена документация API${NC}"
+  echo "  ${WHITE}refactor(components): переписан компонент Button${NC}"
+  echo ""
+  echo "Ваше сообщение коммита:"
+  echo "${WHITE}$message${NC}"
+  echo ""
+  echo "Для получения дополнительной информации проверьте скрипт в .husky/commit-msg"
+  exit 1
+fi
+
+exit 0

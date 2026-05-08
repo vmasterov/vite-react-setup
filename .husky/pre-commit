@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+GREEN=$(printf '\033[0;32m')
+YELLOW=$(printf '\033[0;33m')
+RED=$(printf '\033[0;31m')
+WHITE=$(printf '\033[1;37m')
+NC=$(printf '\033[0m')
+
+# Пропустить проверку ветки при первом коммите (HEAD ещё не существует)
+if ! git rev-parse HEAD > /dev/null 2>&1; then
+  echo "Первый коммит — проверка ветки пропущена"
+  npx lint-staged
+  exit 0
+fi
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+# Запрет коммита в main/develop
+if [ "$branch" = "main" ] || [ "$branch" = "develop" ]; then
+  echo "${RED}❌ Нельзя коммитить напрямую в ветку ${YELLOW}$branch${NC}"
+  exit 1
+fi
+
+# Проверка имени ветки
+if echo "$branch" | grep -qE '^(feature|bugfix|hotfix|refactor|release|chore|docs|test|perf|ci)/'; then
+  echo "${GREEN}✅ Имя ветки верное${NC}"
+elif echo "$branch" | grep -qE '^merge/develop[0-9]*-develop[0-9]*$'; then
+  echo "${GREEN}✅ Имя ветки merge верное${NC}"
+else
+  echo "${RED}❌ Неверное имя ветки${NC}"
+  echo ""
+  echo "Допустимые форматы:"
+  echo "  ${WHITE}<type>/<description>${NC}"
+  echo ""
+  echo "Допустимые типы:"
+  echo "  ${GREEN}feature${NC}   - новая функциональность"
+  echo "  ${GREEN}bugfix${NC}    - исправление багов"
+  echo "  ${GREEN}hotfix${NC}    - срочное исправление"
+  echo "  ${GREEN}refactor${NC}  - рефакторинг кода"
+  echo "  ${GREEN}release${NC}   - подготовка релиза"
+  echo "  ${GREEN}chore${NC}     - вспомогательные задачи"
+  echo "  ${GREEN}docs${NC}      - изменения в документации"
+  echo "  ${GREEN}test${NC}      - добавление тестов"
+  echo "  ${GREEN}perf${NC}      - улучшение производительности"
+  echo "  ${GREEN}ci${NC}        - изменения в CI/CD"
+  echo ""
+  echo "Примеры:"
+  echo "  ${WHITE}feature/add-auth-page${NC}"
+  echo "  ${WHITE}bugfix/fix-login-error${NC}"
+  echo "  ${WHITE}chore/update-dependencies${NC}"
+  echo ""
+  echo "Ваша ветка:"
+  echo "  ${WHITE}$branch${NC}"
+  echo ""
+  exit 1
+fi
+
+# Lint + форматирование
+echo "${YELLOW}🔍 Запуск lint-staged...${NC}"
+if ! npx lint-staged; then
+  echo "${RED}❌ Lint-staged завершился с ошибкой, коммит отклонён${NC}"
+  exit 1
+fi
+echo "${GREEN}✅ Lint-staged успешен${NC}"
+
+# Тесты
+echo "${YELLOW}🧪 Запуск тестов...${NC}"
+if ! npm run test:run; then
+  echo "${RED}❌ Тесты упали, коммит отклонён${NC}"
+  exit 1
+fi
+echo "${GREEN}✅ Тесты прошли${NC}"
+
+# Сборка
+echo "${YELLOW}🚀 Запуск сборки проекта...${NC}"
+if ! npm run build; then
+  echo "${RED}❌ Сборка неуспешна, коммит отклонён${NC}"
+  exit 1
+fi
+
+echo "${GREEN}✅ Сборка успешна, удаление dist...${NC}"
+rm -rf dist
+
+echo "${GREEN}🧹 Готово, продолжение коммита${NC}"
