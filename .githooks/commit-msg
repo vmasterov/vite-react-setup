@@ -1,11 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
-# Определение цветов
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-RED='\033[0;31m'
-WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+GREEN=$(printf '\033[0;32m')
+YELLOW=$(printf '\033[0;33m')
+RED=$(printf '\033[0;31m')
+WHITE=$(printf '\033[1;37m')
+NC=$(printf '\033[0m')
 
 message="$(cat "$1")"
 required_pattern="^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\(.+\))?: .+"
@@ -36,7 +35,7 @@ if ! echo "$message" | grep -qE "$required_pattern"; then
   echo "Ваше сообщение коммита:"
   echo "${WHITE}$message${NC}"
   echo ""
-  echo "Для получения дополнительной информации проверьте скрипт в .husky/commit-msg"
+  echo "Для получения дополнительной информации проверьте скрипт в .githooks/commit-msg"
   exit 1
 fi
 
